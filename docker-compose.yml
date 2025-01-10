@@ -19,6 +19,7 @@ services:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
     depends_on:
       - rabbitmq
+    restart: on-failure
 
 volumes:
   rabbitmq_data:
