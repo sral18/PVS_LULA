@@ -23,3 +23,42 @@ services:
 
 volumes:
   rabbitmq_data:
+
+  consumer-msft:
+    build:
+      context: ./consumer
+    environment:
+      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
+      RABBITMQ_QUEUE: MSFT
+      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_DB: stockmarket
+      MONGODB_COLLECTION: stocks
+    depends_on:
+      - rabbitmq
+      - mongo
+
+  consumer-tsla:
+    build:
+      context: ./consumer
+    environment:
+      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
+      RABBITMQ_QUEUE: TSLA
+      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_DB: stockmarket
+      MONGODB_COLLECTION: stocks
+    depends_on:
+      - rabbitmq
+      - mongo
+
+  consumer-aapl:
+    build:
+      context: ./consumer
+    environment:
+      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
+      RABBITMQ_QUEUE: AAPL
+      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_DB: stockmarket
+      MONGODB_COLLECTION: stocks
+    depends_on:
+      - rabbitmq
+      - mongo
