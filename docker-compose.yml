@@ -16,8 +16,7 @@ services:
   stock-publisher:
     image: lstockerteko/stock-publisher:latest
     environment:
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
     depends_on:
       - rabbitmq
 
