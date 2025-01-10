@@ -5,13 +5,21 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"    # Port für die Kommunikation mit RabbitMQ
-      - "15672:15672"  # Port für das Management-UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: lulateko
       RABBITMQ_DEFAULT_PASS: lulateko
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+
+  stock-publisher:
+    image: lstockerteko/stock-publisher:latest
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+    depends_on:
+      - rabbitmq
 
 volumes:
   rabbitmq_data:
