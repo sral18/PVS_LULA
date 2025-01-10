@@ -21,9 +21,6 @@ services:
       - rabbitmq
     restart: on-failure
 
-volumes:
-  rabbitmq_data:
-
   consumer-msft:
     build:
       context: ./consumer
@@ -36,6 +33,7 @@ volumes:
     depends_on:
       - rabbitmq
       - mongo
+    restart: on-failure
 
   consumer-tsla:
     build:
@@ -49,6 +47,7 @@ volumes:
     depends_on:
       - rabbitmq
       - mongo
+    restart: on-failure
 
   consumer-aapl:
     build:
@@ -62,6 +61,7 @@ volumes:
     depends_on:
       - rabbitmq
       - mongo
+    restart: on-failure
     
   mongo:
     image: mongo:6.0
@@ -71,6 +71,6 @@ volumes:
     volumes:
       - mongo_data:/data/db
 
-  volumes:
-    rabbitmq_data:
-    mongo_data:
+volumes:
+  rabbitmq_data:
+  mongo_data:
