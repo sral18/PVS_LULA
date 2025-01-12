@@ -12,6 +12,12 @@ services:
       RABBITMQ_DEFAULT_PASS: lulateko
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
 
   stock-publisher:
     image: lstockerteko/stock-publisher:latest
@@ -22,8 +28,7 @@ services:
     restart: on-failure
 
   consumer-msft:
-    build:
-      context: ./consumer
+    image: lstockerteko/consumer:latest
     environment:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: MSFT
@@ -31,13 +36,14 @@ services:
       MONGODB_DB: stockmarket
       MONGODB_COLLECTION: stocks
     depends_on:
-      - rabbitmq
-      - mongo0
+      rabbitmq:
+        condition: service_healthy
+      mongo0:
+        condition: service_healthy
     restart: on-failure
 
   consumer-tsla:
-    build:
-      context: ./consumer
+    image: lstockerteko/consumer:latest
     environment:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: TSLA
@@ -45,13 +51,14 @@ services:
       MONGODB_DB: stockmarket
       MONGODB_COLLECTION: stocks
     depends_on:
-      - rabbitmq
-      - mongo0
+      rabbitmq:
+        condition: service_healthy
+      mongo0:
+        condition: service_healthy
     restart: on-failure
 
   consumer-aapl:
-    build:
-      context: ./consumer
+    image: lstockerteko/consumer:latest
     environment:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: AAPL
