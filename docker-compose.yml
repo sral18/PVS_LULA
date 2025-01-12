@@ -27,12 +27,12 @@ services:
     environment:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: MSFT
-      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_URI: mongodb://mongo0:27017/
       MONGODB_DB: stockmarket
       MONGODB_COLLECTION: stocks
     depends_on:
       - rabbitmq
-      - mongo
+      - mongo0
     restart: on-failure
 
   consumer-tsla:
@@ -41,12 +41,12 @@ services:
     environment:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: TSLA
-      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_URI: mongodb://mongo0:27017/
       MONGODB_DB: stockmarket
       MONGODB_COLLECTION: stocks
     depends_on:
       - rabbitmq
-      - mongo
+      - mongo0
     restart: on-failure
 
   consumer-aapl:
@@ -55,33 +55,59 @@ services:
     environment:
       RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: AAPL
-      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_URI: mongodb://mongo0:27017/
       MONGODB_DB: stockmarket
       MONGODB_COLLECTION: stocks
     depends_on:
       - rabbitmq
-      - mongo
+      - mongo0
     restart: on-failure
     
-  mongo:
-    image: mongo:6.0
-    container_name: mongo
+  mongo0:
+    image: mongo:7.0
+    container_name: mongo0
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo_data0:/data/db
+      - mongo_config0:/data/configdb
+
+  mongo1:
+    image: mongo:7.0
+    container_name: mongo1
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data1:/data/db
+      - mongo_config1:/data/configdb
+
+  mongo2:
+    image: mongo:7.0
+    container_name: mongo2
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo_data2:/data/db
+      - mongo_config2:/data/configdb
 
   stock-liveview:
-    image: lucamteko/stock-liveview
+    image: lucamteko/stock-liveview:latest
     container_name: stock-liveview
     environment:
-      MONGO_URL: mongodb://mongo:27017/stockDB
+      MONGODB_URI: mongodb://mongo0:27017/
+      MONGODB_DB: stockmarket
+      MONGODB_COLLECTION: stocks    
     ports:
       - "3000:3000"
     depends_on:
-      - mongo
+      - mongo0
     restart: on-failure
 
 volumes:
   rabbitmq_data:
-  mongo_data:
+  mongo_data0:
+  mongo_config0:
+  mongo_data1:
+  mongo_config1:
+  mongo_data2:
+  mongo_config2:
