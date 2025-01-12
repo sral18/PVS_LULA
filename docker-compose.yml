@@ -9,9 +9,10 @@ services:
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: lulateko
-      RABBITMQ_DEFAULT_PASS: lulateko
+      RABBITMQ_DEFAULT_PASSWORD: lulateko
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    restart: on-failure
 
   stock-publisher:
     image: lstockerteko/stock-publisher:latest
@@ -25,11 +26,8 @@ services:
     build:
       context: ./consumer
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: MSFT
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks
+      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
     depends_on:
       - rabbitmq
       - mongo0
@@ -39,11 +37,8 @@ services:
     build:
       context: ./consumer
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: TSLA
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks
+      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
     depends_on:
       - rabbitmq
       - mongo0
@@ -53,11 +48,8 @@ services:
     build:
       context: ./consumer
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: AAPL
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks
+      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
     depends_on:
       - rabbitmq
       - mongo0
@@ -72,9 +64,11 @@ services:
       - mongo_data0:/data/db
       - mongo_config0:/data/configdb
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: on-failure
     healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo0:27017',priority:1},{_id:1,host:'mongo1:27018',priority:0.5},{_id:2,host:'mongo2:27019',priority:0.5}]}) }" | mongosh --port 27017 --quiet
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019',priority:0.5}]}) }" | mongosh --port 27017 --quiet 
       interval: 5s
       timeout: 30s
       start_period: 0s
@@ -89,6 +83,8 @@ services:
       - mongo_data1:/data/db
       - mongo_config1:/data/configdb
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: on-failure
 
   mongo2:
@@ -100,13 +96,14 @@ services:
       - mongo_data2:/data/db
       - mongo_config2:/data/configdb
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: on-failure
 
   stock-liveview:
     image: lucamteko/stock-liveview:latest
     container_name: stock-liveview
     environment:
-      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
       MONGODB_DB: stockmarket
       MONGODB_COLLECTION: stocks    
     ports:
