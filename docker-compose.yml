@@ -9,58 +9,60 @@ services:
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: lulateko
-      RABBITMQ_DEFAULT_PASS: lulateko
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      RABBITMQ_DEFAULT_PASS: lulatekopass
+      RABBITMQ_DEFAULT_VHOST: /
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    restart: on-failure
 
   stock-publisher:
-    image: lstockerteko/stock-publisher:latest
+    image: lucamteko/stock-publisher:latest
+    container_name: stock-publisher
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
+      RABBITMQ_URL: amqp://lulateko:lulatekopass@rabbitmq:5672/
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: on-failure
 
   consumer-msft:
-    build:
-      context: ./consumer
+    image: lucamteko/consumer:latest
+    container_name: consumer-msft
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: MSFT
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks
     depends_on:
-      - rabbitmq
-      - mongo0
+      rabbitmq:
+        condition: service_healthy
+      mongo0:
+        condition: service_healthy
     restart: on-failure
 
   consumer-tsla:
-    build:
-      context: ./consumer
+    image: lucamteko/consumer:latest
+    container_name: consumer-tsla
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: TSLA
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks
     depends_on:
-      - rabbitmq
-      - mongo0
+      rabbitmq:
+        condition: service_healthy
+      mongo0:
+        condition: service_healthy
     restart: on-failure
 
   consumer-aapl:
-    build:
-      context: ./consumer
+    image: lucamteko/consumer:latest
+    container_name: consumer-aapl
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
       RABBITMQ_QUEUE: AAPL
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks
     depends_on:
-      - rabbitmq
-      - mongo0
+      rabbitmq:
+        condition: service_healthy
+      mongo0:
+        condition: service_healthy
     restart: on-failure
     
   mongo0:
@@ -71,40 +73,81 @@ services:
     volumes:
       - mongo_data0:/data/db
       - mongo_config0:/data/configdb
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019',priority:0.5}]}) }" | mongosh --port 27017 --quiet 
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
+    restart: on-failure
 
   mongo1:
     image: mongo:7.0
     container_name: mongo1
     ports:
-      - "27018:27017"
+      - "27018:27018"
     volumes:
       - mongo_data1:/data/db
       - mongo_config1:/data/configdb
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: on-failure
 
   mongo2:
     image: mongo:7.0
     container_name: mongo2
     ports:
-      - "27019:27017"
+      - "27019:27019"
     volumes:
       - mongo_data2:/data/db
       - mongo_config2:/data/configdb
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: on-failure
 
-  stock-liveview:
+  stock-liveview0:
     image: lucamteko/stock-liveview:latest
-    container_name: stock-liveview
-    environment:
-      MONGODB_URI: mongodb://mongo0:27017/
-      MONGODB_DB: stockmarket
-      MONGODB_COLLECTION: stocks    
+    container_name: stock-liveview0
     ports:
       - "3000:3000"
     depends_on:
-      - mongo0
+      mongo0:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: on-failure
 
+  stock-liveview1:
+    image: lucamteko/stock-liveview:latest
+    container_name: stock-liveview1
+    ports:
+      - "3001:3000"
+    depends_on:
+      mongo0:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./NGINX/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      stock-liveview0:
+        condition: service_healthy
+    restart: always
+
 volumes:
-  rabbitmq_data:
   mongo_data0:
   mongo_config0:
   mongo_data1:

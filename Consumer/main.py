@@ -10,9 +10,9 @@ def fail_on_error(error, message):
         raise Exception(f"{message}: {error}")
 
 # Lade die Verbindungsdetails aus Umgebungsvariablen oder nutze Standardwerte
-RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://lulateko:lulateko@rabbitmq:5672/")
+RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://lulateko:lulatekopass@rabbitmq:5672/")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "default")
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://mongo:27017/")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://mongo0:27017,mongo1:27018,mongo2:27019/?replicaSet=rs0")
 MONGODB_DB = os.getenv("MONGODB_DB", "stockmarket")
 MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION", "stocks")
 
@@ -27,17 +27,39 @@ collection = db[MONGODB_COLLECTION]
 
 # Verarbeite die Nachrichten, die aus RabbitMQ kommen
 def process_messages(ch, method, properties, body):
-    messages = json.loads(body)
-    prices = [msg["price"] for msg in messages]
-    avg_price = statistics.mean(prices)
+    try:
+        # Versuche, die Nachricht als JSON zu laden
+        messages = json.loads(body)
+        print(f"Received messages: {messages}")  # Debugging Zeile, um die Nachricht zu überprüfen
 
-    # Speichere das Ergebnis in der MongoDB
-    result = {
-        "company": messages[0]["company"],
-        "avgPrice": avg_price
-    }
-    collection.insert_one(result)
-    print(f" [x] Processed {len(messages)} messages. Avg Price: {avg_price}")
+        # Wenn die Nachricht eine Liste ist
+        if isinstance(messages, list):
+            prices = [msg["price"] for msg in messages]
+            avg_price = statistics.mean(prices)
+
+            # Speichere das Ergebnis in der MongoDB
+            result = {
+                "company": messages[0]["company"],
+                "avgPrice": avg_price
+            }
+            collection.insert_one(result)
+            print(f" [x] Processed {len(messages)} messages. Avg Price: {avg_price}")
+        # Wenn die Nachricht ein einzelnes Dictionary ist
+        elif isinstance(messages, dict):
+            prices = [messages["price"]]
+            avg_price = statistics.mean(prices)
+
+            # Speichere das Ergebnis in der MongoDB
+            result = {
+                "company": messages["company"],
+                "avgPrice": avg_price
+            }
+            collection.insert_one(result)
+            print(f" [x] Processed 1 message. Avg Price: {avg_price}")
+        else:
+            print("Received message is neither a list nor a dictionary")
+    except Exception as e:
+        print(f"Error processing message: {e}")
 
     # Bestätige, dass die Nachricht verarbeitet wurde
     ch.basic_ack(delivery_tag=method.delivery_tag)
