@@ -9,7 +9,8 @@ services:
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: lulateko
-      RABBITMQ_DEFAULT_PASSWORD: lulateko
+      RABBITMQ_DEFAULT_PASS: lulatekopass
+      RABBITMQ_DEFAULT_VHOST: /
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -23,16 +24,18 @@ services:
   stock-publisher:
     image: lstockerteko/stock-publisher:latest
     environment:
-      RABBITMQ_URL: amqp://lulateko:lulateko@rabbitmq:5672/
+      RABBITMQ_URL: amqp://lulateko:lulatekopass@rabbitmq:5672/
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: on-failure
 
   consumer-msft:
     image: lstockerteko/consumer:latest
     environment:
       RABBITMQ_QUEUE: MSFT
-      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
+      RABBITMQ_URL: amqp://lulateko:lulatekopass@rabbitmq:5672/
+      MONGODB_URI: mongodb://mongo0:27017,mongo1:27018,mongo2:27019/?replicaSet=rs0
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -44,7 +47,8 @@ services:
     image: lstockerteko/consumer:latest
     environment:
       RABBITMQ_QUEUE: TSLA
-      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
+      RABBITMQ_URL: amqp://lulateko:lulatekopass@rabbitmq:5672/
+      MONGODB_URI: mongodb://mongo0:27017,mongo1:27018,mongo2:27019/?replicaSet=rs0
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -56,10 +60,13 @@ services:
     image: lstockerteko/consumer:latest
     environment:
       RABBITMQ_QUEUE: AAPL
-      MONGODB_URI: mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
+      RABBITMQ_URL: amqp://lulateko:lulatekopass@rabbitmq:5672/
+      MONGODB_URI: mongodb://mongo0:27017,mongo1:27018,mongo2:27019/?replicaSet=rs0
     depends_on:
-      - rabbitmq
-      - mongo0
+      rabbitmq:
+        condition: service_healthy
+      mongo0:
+        condition: service_healthy
     restart: on-failure
     
   mongo0:
