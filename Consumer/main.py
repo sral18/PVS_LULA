@@ -10,9 +10,9 @@ def fail_on_error(error, message):
         raise Exception(f"{message}: {error}")
 
 # Lade die Verbindungsdetails aus Umgebungsvariablen oder nutze Standardwerte
-RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://lulateko:lulateko@rabbitmq:5672/")
+RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://lulateko:lulatekopass@rabbitmq:5672/")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "default")
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://mongo:27017/")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://mongo0:27017,mongo1:27018,mongo2:27019/?replicaSet=rs0")
 MONGODB_DB = os.getenv("MONGODB_DB", "stockmarket")
 MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION", "stocks")
 
