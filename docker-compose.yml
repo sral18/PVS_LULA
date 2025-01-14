@@ -134,6 +134,7 @@ services:
     depends_on:
       mongo0:
         condition: service_healthy
+    restart: on-failure
 
   nginx:
     image: nginx:latest
