@@ -34,8 +34,8 @@ def process_messages(ch, method, properties, body):
 
         # Wenn die Nachricht eine Liste ist
         if isinstance(messages, list):
-            prices = [msg["price"] for msg in messages]
-            avg_price = statistics.mean(prices)
+            prices = [round(msg["price"], 2) for msg in messages]  # Preise runden
+            avg_price = round(statistics.mean(prices), 2)  # Durchschnittspreis runden
 
             # Speichere das Ergebnis in der MongoDB
             result = {
@@ -46,8 +46,8 @@ def process_messages(ch, method, properties, body):
             print(f" [x] Processed {len(messages)} messages. Avg Price: {avg_price}")
         # Wenn die Nachricht ein einzelnes Dictionary ist
         elif isinstance(messages, dict):
-            prices = [messages["price"]]
-            avg_price = statistics.mean(prices)
+            prices = [round(messages["price"], 2)]  # Preis runden
+            avg_price = round(statistics.mean(prices), 2)  # Durchschnittspreis runden
 
             # Speichere das Ergebnis in der MongoDB
             result = {
