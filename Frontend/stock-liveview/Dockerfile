@@ -16,5 +16,8 @@ EXPOSE 3000
 # Copy the source code to the container
 COPY . .
 
+# Set the environment variable
+ENV MONGODB_URL="mongodb://host.docker.internal:27017,host.docker.internal:27018,host.docker.internal:27019/stocks?replicaSet=rs0"
+
 # Start the server when the container starts
 CMD ["node", "app.js"]
